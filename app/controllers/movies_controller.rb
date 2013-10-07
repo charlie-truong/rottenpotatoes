@@ -7,13 +7,37 @@ class MoviesController < ApplicationController
   end
 
   def index
-    if params[:sort] == 'movie_title'
-      @movies = Movie.find(:all, :order => 'title ASC')
-    elsif params[:sort] == 'release_date'
-      @movies = Movie.find(:all, :order => 'release_date ASC')
-    else
-      @movies = Movie.all
+    @all_ratings = Movie.ratings
+    @selected_ratings = @all_ratings
+    @highlight_title = ''
+    @highlight_release_date = ''
+
+    if params[:ratings]
+      @selected_ratings = params[:ratings].keys
+      session[:ratings] = params[:ratings].keys
+    elsif session[:ratings]
+      @selected_ratings = session[:ratings]
     end
+
+    if params[:sort] == 'movie_title'
+      @movies = Movie.where("rating IN (?)", @selected_ratings).order('title ASC')
+      @highlight_title = 'hilite'
+      session[:sort] = 'movie_title'
+    elsif params[:sort] == 'release_date'
+      @movies = Movie.where("rating IN (?)", @selected_ratings).order('release_date ASC')
+      @highlight_release_date = 'hilite'
+      session[:sort] = 'release_date'
+    elsif session[:sort] == 'movie_title'
+      @movies = Movie.where("rating IN (?)", @selected_ratings).order('title ASC')
+      @highlight_title = 'hilite'
+    elsif session[:sort] == 'release_date'
+      @movies = Movie.where("rating IN (?)", @selected_ratings).order('release_date ASC')
+      @highlight_release_date = 'hilite'
+    else
+      @movies = Movie.where("rating IN (?)", @selected_ratings)
+    end
+
+    session[:return_url] = request.original_url
   end
 
   def new
